@@ -17,9 +17,18 @@ def config_group():
 
 
 @config_group.command("setup")
-def config_setup():
+@click.argument("user_name")
+@click.option(
+    "-g",
+    "--gender",
+    type=click.Choice(convo.config.GENDERS),
+    default="not-specified",
+    help="Specify a gender so that the AI can use the correct pronouns.",
+)
+def config_setup(user_name: str, gender: convo.config.Gender):
+    """Set up convo with. Specify your real name and gender so that the AIs can improve both summaries and transcripts."""
     try:
-        convo.config.setup()
+        convo.config.setup(user_name, gender)
     except Exception as e:
         click.secho(e, fg="red")
         sys.exit(1)
@@ -60,6 +69,25 @@ def config_get(path: bool, json: bool):
 @config_group.group("set")
 def config_set_group():
     """Update convo's configuration."""
+
+
+@config_set_group.command("user")
+@click.option("-n", "--name")
+@click.option(
+    "-g",
+    "--gender",
+    type=click.Choice(convo.config.GENDERS),
+    help="Specify a gender so that the AI can use the correct pronouns.",
+)
+def config_set_user(name: str | None, gender: convo.config.Gender | None):
+    """Set up the user information in the configuration."""
+    try:
+        convo.config.set_config_data(user_name=name, user_gender=gender)
+    except Exception as e:
+        click.secho(e, fg="red")
+        sys.exit(1)
+
+    click.secho("Successfully set your user data.", fg="green")
 
 
 @config_set_group.command("deepgram")
@@ -185,6 +213,19 @@ def ai_group():
     pass
 
 
+@ai_group.command("context")
+def ai_context():
+    """Print the query context the AI uses to answer questions to stdout."""
+    click.echo(convo.ai.get_context())
+
+
+@ai_group.command("query")
+@click.argument("prompt")
+def ai_query(prompt: str):
+    """Question an AI about the summaries of the transcripts."""
+    convo.ai.query(prompt)
+
+
 @ai_group.command("transcribe")
 @click.argument("audio_file_path")
 @click.option(
@@ -222,6 +263,7 @@ def ai_transcribe(
     date: datetime,
     cache: bool,
 ):
+    """Transcribe an audio file."""
     try:
         convo.ai.create_transcript(
             audio_file_path,
@@ -235,3 +277,83 @@ def ai_transcribe(
         sys.exit(1)
 
     click.secho(f"Successfully transcribed '{audio_file_path}'.", fg="green")
+
+
+@convo_cli.group("transcripts")
+def transcripts_group():
+    """Manage existing transcripts."""
+
+
+@transcripts_group.command("list")
+@click.option(
+    "-p",
+    "--path",
+    is_flag=True,
+    default=False,
+    help="Print file paths instead of file names.",
+)
+def transcripts_list(path: bool):
+    """List all existing transcripts"""
+    click.echo("\n".join(convo.transcripts.list(path)) + "\n")
+
+
+@transcripts_group.command("show")
+@click.argument("transcript_name")
+@click.option(
+    "-s",
+    "--summary",
+    is_flag=True,
+    default=False,
+    help="Print only summary without content and metadata.",
+)
+@click.option(
+    "-c",
+    "--content",
+    is_flag=True,
+    default=False,
+    help="Print only transcript without summary and metadata.",
+)
+@click.option(
+    "-m",
+    "--metadata",
+    is_flag=True,
+    default=False,
+    help="Print only metadata without summary and transcript.",
+)
+@click.option(
+    "-j",
+    "--json",
+    is_flag=True,
+    default=False,
+    help="Print transcript data as JSON.",
+)
+@click.option(
+    "-p",
+    "--path",
+    is_flag=True,
+    default=False,
+    help="Print file paths instead of file content.",
+)
+def transcripts_show(
+    transcript_name: str,
+    summary: bool,
+    content: bool,
+    metadata: bool,
+    json: bool,
+    path: bool,
+):
+    """Show the complete or a specified part of a transcripts"""
+    try:
+        click.echo(
+            convo.transcripts.show(
+                transcript_name=transcript_name,
+                summary=summary,
+                content=content,
+                metadata=metadata,
+                path=path,
+                as_json=json,
+            )
+        )
+    except Exception as e:
+        click.secho(e, fg="red")
+        sys.exit(1)

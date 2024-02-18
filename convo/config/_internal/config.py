@@ -2,7 +2,7 @@ import os
 import json
 from typing import Literal
 from .errors import MissingAiProviderError
-from .types import AiConfig, ConfigData, Provider
+from .types import AiConfig, ConfigData, Gender, Provider
 
 CONFIG_DIR_NAME = ".convo"
 CONFIG_DIR_PATH = os.path.expanduser(f"~/{CONFIG_DIR_NAME}")
@@ -124,6 +124,8 @@ def set_config_data(
     open_ai_api_key: str | None = None,
     open_ai_model: str | None = None,
     common_words: list[str] = [],
+    user_name: str | None = None,
+    user_gender: Gender | None = None,
 ):
     """
     Set the fields of the config.json file.
@@ -138,10 +140,13 @@ def set_config_data(
         set_ai_config(config_data, "deepgram", deepgram_api_key, deepgram_model)
     if open_ai_api_key or open_ai_model:
         set_ai_config(config_data, "open_ai", open_ai_api_key, open_ai_model)
-
     if common_words:
         unique_common_words = list(set(common_words))
         config_data["common_words"] = unique_common_words
+    if user_name:
+        config_data["user"]["name"] = user_name
+    if user_gender:
+        config_data["user"]["gender"] = user_gender
 
     with open(CONFIG_FILE_PATH, "w") as config_file:
         json.dump(config_data, config_file, indent=4)
@@ -203,7 +208,7 @@ def get_transcript(filename: str, path=False) -> str:
     return content
 
 
-def setup() -> ConfigData:
+def setup(user_name: str, gender: Gender) -> ConfigData:
     """
     Setup the `.convo` config folder with the following content:
       - `config.json` file
@@ -223,6 +228,10 @@ def setup() -> ConfigData:
 
     initial_config_data: ConfigData = {
         "version": 1,
+        "user": {
+            "name": user_name,
+            "gender": gender,
+        },
         "common_words": [],
     }
     with open(CONFIG_FILE_PATH, "w") as config_file:

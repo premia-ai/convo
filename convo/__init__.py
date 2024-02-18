@@ -1,3 +1,3 @@
-from . import ai, config
+from . import ai, config, transcripts
 
-__all__ = ["ai", "config"]
+__all__ = ["ai", "config", "transcripts"]

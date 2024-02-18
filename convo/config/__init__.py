@@ -11,13 +11,15 @@ from ._internal.config import (
     TRANSCRIPTS_DIR_PATH,
 )
 from ._internal.errors import MissingAiProviderError
-from ._internal.types import ConfigData, Provider
+from ._internal.types import ConfigData, Gender, GENDERS, Provider
 
 __all__ = [
     "CACHE_DIR_PATH",
     "CONFIG_FILE_PATH",
     "ConfigData",
     "DEFAULT_MODEL",
+    "Gender",
+    "GENDERS",
     "get_ai_config_or_raise",
     "get_config_data",
     "get_config_data_as_json",
